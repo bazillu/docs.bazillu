@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bazillu Docs - Beautiful Word Processing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .editor-content {
+            min-height: 800px;
+            line-height: 1.6;
+        }
+        .toolbar-button {
+            transition: all 0.2s ease;
+        }
+        .toolbar-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .active-tool {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .glass-effect {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.9);
+        }
+        .document-shadow {
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        @media print {
+            .no-print { display: none !important; }
+            .editor-content { box-shadow: none !important; margin: 0 !important; }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 min-h-screen">
+    <!-- Header -->
+    <header class="glass-effect border-b border-white/20 sticky top-0 z-50 no-print">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="gradient-bg text-white px-4 py-2 rounded-xl font-bold text-xl">
+                        📝 Bazillu Docs
+                    </div>
+                    <div class="text-gray-600">
+                        <span id="documentTitle" class="font-medium">Untitled Document</span>
+                        <span class="text-sm ml-2" id="saveStatus">✅ Saved</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button onclick="shareDocument()" class="toolbar-button bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium">
+                        🔗 Share
+                    </button>
+                    <button onclick="downloadDocument()" class="toolbar-button bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium">
+                        💾 Download
+                    </button>
+                    <button onclick="printDocument()" class="toolbar-button bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg font-medium">
+                        🖨️ Print
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Toolbar -->
+    <div class="glass-effect border-b border-white/20 no-print">
+        <div class="max-w-7xl mx-auto px-6 py-3">
+            <!-- File Operations -->
+            <div class="flex items-center space-x-2 mb-3">
+                <button onclick="newDocument()" class="toolbar-button bg-white hover:bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 text-sm font-medium">
+                    📄 New
+                </button>
+                <button onclick="openDocument()" class="toolbar-button bg-white hover:bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 text-sm font-medium">
+                    📁 Open
+                </button>
+                <div class="w-px h-6 bg-gray-300 mx-2"></div>
+                <button onclick="undoAction()" class="toolbar-button bg-white hover:bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 text-sm font-medium">
+                    ↶ Undo
+                </button>
+                <button onclick="redoAction()" class="toolbar-button bg-white hover:bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 text-sm font-medium">
+                    ↷ Redo
+                </button>
+            </div>
+
+            <!-- Formatting Toolbar -->
+            <div class="flex items-center space-x-2 flex-wrap">
+                <!-- Font Controls -->
+                <select id="fontFamily" onchange="changeFontFamily()" class="toolbar-button bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                    <option value="Inter">Inter</option>
+                    <option value="Arial">Arial</option>
+                    <option value="Times New Roman">Times New Roman</option>
+                    <option value="Georgia">Georgia</option>
+                    <option value="Helvetica">Helvetica</option>
+                </select>
+                
+                <select id="fontSize" onchange="changeFontSize()" class="toolbar-button bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                    <option value="12">12</option>
+                    <option value="14" selected>14</option>
+                    <option value="16">16</option>
+                    <option value="18">18</option>
+                    <option value="20">20</option>
+                    <option value="24">24</option>
+                    <option value="28">28</option>
+                    <option value="32">32</option>
+                </select>
+
+                <div class="w-px h-6 bg-gray-300 mx-2"></div>
+
+                <!-- Text Formatting -->
+                <button id="boldBtn" onclick="toggleBold()" class="toolbar-button bg-white hover:bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 font-bold">
+                    B
+                </button>
+                <button id="italicBtn" onclick="toggleItalic()" class="toolbar-button bg-white hover:bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 italic">
+                    I
+                </button>
+                <button id="underlineBtn" onclick="toggleUnderline()" class="toolbar-button bg-white hover:bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 underline">
+                    U
+                </button>
+
+                <div class="w-px h-6 bg-gray-300 mx-2"></div>
+
+                <!-- Alignment -->
+                <button onclick="alignText('left')" class="toolbar-button bg-white hover:bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
+                    ⬅️
+                </button>
+                <button onclick="alignText('center')" class="toolbar-button bg-white hover:bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
+                    ↔️
+                </button>
+                <button onclick="alignText('right')" class="toolbar-button bg-white hover:bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
+                    ➡️
+                </button>
+                <button onclick="alignText('justify')" class="toolbar-button bg-white hover:bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
+                    ⬌
+                </button>
+
+                <div class="w-px h-6 bg-gray-300 mx-2"></div>
+
+                <!-- Lists -->
+                <button onclick="insertList('ul')" class="toolbar-button bg-white hover:bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
+                    • List
+                </button>
+                <button onclick="insertList('ol')" class="toolbar-button bg-white hover:bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
+                    1. List
+                </button>
+
+                <div class="w-px h-6 bg-gray-300 mx-2"></div>
+
+                <!-- Colors -->
+                <input type="color" id="textColor" onchange="changeTextColor()" class="toolbar-button w-10 h-10 rounded-lg border border-gray-200 cursor-pointer" value="#000000" title="Text Color">
+                <input type="color" id="bgColor" onchange="changeBackgroundColor()" class="toolbar-button w-10 h-10 rounded-lg border border-gray-200 cursor-pointer" value="#ffffff" title="Background Color">
+
+                <div class="w-px h-6 bg-gray-300 mx-2"></div>
+
+                <!-- Insert -->
+                <button onclick="insertTable()" class="toolbar-button bg-white hover:bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 text-sm">
+                    📊 Table
+                </button>
+                <button onclick="insertImage()" class="toolbar-button bg-white hover:bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 text-sm">
+                    🖼️ Image
+                </button>
+                <button onclick="insertLink()" class="toolbar-button bg-white hover:bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 text-sm">
+                    🔗 Link
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-5xl mx-auto px-6 py-8">
+        <!-- Document Title Input -->
+        <div class="mb-6 no-print">
+            <input 
+                type="text" 
+                id="titleInput" 
+                placeholder="Document Title" 
+                class="text-3xl font-bold bg-transparent border-none outline-none w-full text-gray-800 placeholder-gray-400"
+                onchange="updateDocumentTitle()"
+            >
+        </div>
+
+        <!-- Editor -->
+        <div class="document-shadow bg-white rounded-2xl overflow-hidden">
+            <div 
+                id="editor" 
+                class="editor-content p-12 outline-none" 
+                contenteditable="true" 
+                style="font-family: Inter; font-size: 14px;"
+                onkeyup="updateWordCount(); autoSave();"
+                onpaste="handlePaste(event)"
+            >
+                <p>Welcome to Bazillu Docs! Start typing your document here...</p>
+                <p><br></p>
+                <p>This beautiful word processor includes:</p>
+                <ul>
+                    <li>Rich text formatting with beautiful typography</li>
+                    <li>Real-time auto-save functionality</li>
+                    <li>Professional document styling</li>
+                    <li>Export and sharing capabilities</li>
+                    <li>Responsive design that works on all devices</li>
+                </ul>
+                <p><br></p>
+                <p>Experience the future of document editing with Bazillu Docs!</p>
+            </div>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="flex justify-between items-center mt-4 text-sm text-gray-600 no-print">
+            <div class="flex items-center space-x-4">
+                <span id="wordCount">Words: 0</span>
+                <span id="charCount">Characters: 0</span>
+                <span>Pages: 1</span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <span>Zoom:</span>
+                <button onclick="changeZoom(-10)" class="px-2 py-1 bg-gray-100 rounded hover:bg-gray-200">-</button>
+                <span id="zoomLevel">100%</span>
+                <button onclick="changeZoom(10)" class="px-2 py-1 bg-gray-100 rounded hover:bg-gray-200">+</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden file input for opening documents -->
+    <input type="file" id="fileInput" accept=".html,.txt" style="display: none;" onchange="loadDocument(event)">
+
+    <script>
+        let currentZoom = 100;
+        let undoStack = [];
+        let redoStack = [];
+        let autoSaveTimer;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateWordCount();
+            saveState();
+        });
+
+        // Document Operations
+        function newDocument() {
+            if (confirm('Create a new document? Unsaved changes will be lost.')) {
+                document.getElementById('editor').innerHTML = '<p>Start typing your new document...</p>';
+                document.getElementById('titleInput').value = '';
+                updateDocumentTitle();
+                updateWordCount();
+                saveState();
+            }
+        }
+
+        function openDocument() {
+            document.getElementById('fileInput').click();
+        }
+
+        function loadDocument(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const content = e.target.result;
+                    if (file.name.endsWith('.html')) {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(content, 'text/html');
+                        const editorContent = doc.querySelector('#editor') || doc.body;
+                        document.getElementById('editor').innerHTML = editorContent.innerHTML;
+                    } else {
+                        document.getElementById('editor').innerHTML = '<p>' + content.replace(/\n/g, '</p><p>') + '</p>';
+                    }
+                    updateWordCount();
+                    saveState();
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function downloadDocument() {
+            const title = document.getElementById('titleInput').value || 'Untitled Document';
+            const content = document.getElementById('editor').innerHTML;
+            
+            const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+    <title>${title}</title>
+    <style>
+        body { font-family: Inter, Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 40px; line-height: 1.6; }
+        h1, h2, h3 { color: #333; }
+        table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h1>${title}</h1>
+    <div>${content}</div>
+</body>
+</html>`;
+
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = title + '.html';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function printDocument() {
+            window.print();
+        }
+
+        function shareDocument() {
+            const title = document.getElementById('titleInput').value || 'Untitled Document';
+            const content = document.getElementById('editor').innerText.substring(0, 100) + '...';
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: title,
+                    text: content,
+                    url: window.location.href
+                });
+            } else {
+                // Fallback - copy to clipboard
+                const shareText = `${title}\n\n${content}\n\nCreated with Bazillu Docs`;
+                navigator.clipboard.writeText(shareText).then(() => {
+                    alert('Document content copied to clipboard!');
+                });
+            }
+        }
+
+        // Formatting Functions
+        function toggleBold() {
+            document.execCommand('bold');
+            updateToolbarState();
+            saveState();
+        }
+
+        function toggleItalic() {
+            document.execCommand('italic');
+            updateToolbarState();
+            saveState();
+        }
+
+        function toggleUnderline() {
+            document.execCommand('underline');
+            updateToolbarState();
+            saveState();
+        }
+
+        function changeFontFamily() {
+            const font = document.getElementById('fontFamily').value;
+            document.execCommand('fontName', false, font);
+            saveState();
+        }
+
+        function changeFontSize() {
+            const size = document.getElementById('fontSize').value;
+            document.execCommand('fontSize', false, '7');
+            const fontElements = document.querySelectorAll('font[size="7"]');
+            fontElements.forEach(el => {
+                el.removeAttribute('size');
+                el.style.fontSize = size + 'px';
+            });
+            saveState();
+        }
+
+        function alignText(alignment) {
+            document.execCommand('justify' + alignment.charAt(0).toUpperCase() + alignment.slice(1));
+            saveState();
+        }
+
+        function insertList(type) {
+            if (type === 'ul') {
+                document.execCommand('insertUnorderedList');
+            } else {
+                document.execCommand('insertOrderedList');
+            }
+            saveState();
+        }
+
+        function changeTextColor() {
+            const color = document.getElementById('textColor').value;
+            document.execCommand('foreColor', false, color);
+            saveState();
+        }
+
+        function changeBackgroundColor() {
+            const color = document.getElementById('bgColor').value;
+            document.execCommand('backColor', false, color);
+            saveState();
+        }
+
+        function insertTable() {
+            const rows = prompt('Number of rows:', '3');
+            const cols = prompt('Number of columns:', '3');
+            
+            if (rows && cols) {
+                let tableHTML = '<table style="border-collapse: collapse; width: 100%; margin: 20px 0;"><tbody>';
+                for (let i = 0; i < rows; i++) {
+                    tableHTML += '<tr>';
+                    for (let j = 0; j < cols; j++) {
+                        tableHTML += '<td style="border: 1px solid #ddd; padding: 8px;">Cell</td>';
+                    }
+                    tableHTML += '</tr>';
+                }
+                tableHTML += '</tbody></table>';
+                
+                document.execCommand('insertHTML', false, tableHTML);
+                saveState();
+            }
+        }
+
+        function insertImage() {
+            const url = prompt('Enter image URL:');
+            if (url) {
+                const img = `<img src="${url}" style="max-width: 100%; height: auto; margin: 10px 0;" alt="Inserted image">`;
+                document.execCommand('insertHTML', false, img);
+                saveState();
+            }
+        }
+
+        function insertLink() {
+            const url = prompt('Enter URL:');
+            const text = prompt('Enter link text:');
+            if (url && text) {
+                const link = `<a href="${url}" style="color: #667eea; text-decoration: underline;">${text}</a>`;
+                document.execCommand('insertHTML', false, link);
+                saveState();
+            }
+        }
+
+        // Utility Functions
+        function updateToolbarState() {
+            document.getElementById('boldBtn').classList.toggle('active-tool', document.queryCommandState('bold'));
+            document.getElementById('italicBtn').classList.toggle('active-tool', document.queryCommandState('italic'));
+            document.getElementById('underlineBtn').classList.toggle('active-tool', document.queryCommandState('underline'));
+        }
+
+        function updateWordCount() {
+            const text = document.getElementById('editor').innerText;
+            const words = text.trim().split(/\s+/).filter(word => word.length > 0).length;
+            const chars = text.length;
+            
+            document.getElementById('wordCount').textContent = `Words: ${words}`;
+            document.getElementById('charCount').textContent = `Characters: ${chars}`;
+        }
+
+        function updateDocumentTitle() {
+            const title = document.getElementById('titleInput').value || 'Untitled Document';
+            document.getElementById('documentTitle').textContent = title;
+            document.title = title + ' - Bazillu Docs';
+        }
+
+        function changeZoom(delta) {
+            currentZoom += delta;
+            currentZoom = Math.max(50, Math.min(200, currentZoom));
+            document.getElementById('zoomLevel').textContent = currentZoom + '%';
+            document.getElementById('editor').style.transform = `scale(${currentZoom / 100})`;
+            document.getElementById('editor').style.transformOrigin = 'top left';
+        }
+
+        // Undo/Redo System
+        function saveState() {
+            const state = {
+                content: document.getElementById('editor').innerHTML,
+                title: document.getElementById('titleInput').value
+            };
+            undoStack.push(JSON.stringify(state));
+            if (undoStack.length > 50) undoStack.shift();
+            redoStack = [];
+        }
+
+        function undoAction() {
+            if (undoStack.length > 1) {
+                redoStack.push(undoStack.pop());
+                const state = JSON.parse(undoStack[undoStack.length - 1]);
+                document.getElementById('editor').innerHTML = state.content;
+                document.getElementById('titleInput').value = state.title;
+                updateDocumentTitle();
+                updateWordCount();
+            }
+        }
+
+        function redoAction() {
+            if (redoStack.length > 0) {
+                const state = JSON.parse(redoStack.pop());
+                undoStack.push(JSON.stringify(state));
+                document.getElementById('editor').innerHTML = state.content;
+                document.getElementById('titleInput').value = state.title;
+                updateDocumentTitle();
+                updateWordCount();
+            }
+        }
+
+        // Auto-save
+        function autoSave() {
+            clearTimeout(autoSaveTimer);
+            document.getElementById('saveStatus').textContent = '💾 Saving...';
+            
+            autoSaveTimer = setTimeout(() => {
+                // Simulate save to localStorage
+                const docData = {
+                    title: document.getElementById('titleInput').value,
+                    content: document.getElementById('editor').innerHTML,
+                    lastSaved: new Date().toISOString()
+                };
+                localStorage.setItem('bazillu_doc', JSON.stringify(docData));
+                document.getElementById('saveStatus').textContent = '✅ Saved';
+            }, 1000);
+        }
+
+        // Handle paste events
+        function handlePaste(event) {
+            event.preventDefault();
+            const paste = (event.clipboardData || window.clipboardData).getData('text/plain');
+            document.execCommand('insertText', false, paste);
+            saveState();
+        }
+
+        // Load saved document on page load
+        window.addEventListener('load', () => {
+            const saved = localStorage.getItem('bazillu_doc');
+            if (saved) {
+                const docData = JSON.parse(saved);
+                document.getElementById('titleInput').value = docData.title;
+                document.getElementById('editor').innerHTML = docData.content;
+                updateDocumentTitle();
+                updateWordCount();
+            }
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 'b':
+                        e.preventDefault();
+                        toggleBold();
+                        break;
+                    case 'i':
+                        e.preventDefault();
+                        toggleItalic();
+                        break;
+                    case 'u':
+                        e.preventDefault();
+                        toggleUnderline();
+                        break;
+                    case 'z':
+                        e.preventDefault();
+                        if (e.shiftKey) {
+                            redoAction();
+                        } else {
+                            undoAction();
+                        }
+                        break;
+                    case 's':
+                        e.preventDefault();
+                        autoSave();
+                        break;
+                    case 'p':
+                        e.preventDefault();
+                        printDocument();
+                        break;
+                }
+            }
+        });
+
+        // Update toolbar state on selection change
+        document.addEventListener('selectionchange', updateToolbarState);
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96525ec3639f1fd5',t:'MTc1MzUxNjg5Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
